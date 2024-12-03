@@ -36,36 +36,19 @@ def safe_check(report: list, min_diff: int, max_diff:int) -> bool:
 
 
 def recursive_safe_check(report: list, min_diff: int, max_diff:int, tolerance: int) -> bool:
-    is_increaasing = True
-    is_decreasing = True
-    is_in_interval = True
-    safe = True
+    is_safe = safe_check(report, min_diff, max_diff)
 
-    for i in range(len(report) - 1):
-        num_a = report[i]
-        num_b = report[i + 1]
-        diff = abs(num_a - num_b)
-        
-        if ((diff < min_diff) or (max_diff < diff)):
-            is_in_interval = False
+    if (is_safe == False) and (tolerance > 0):
+        for i in range(len(report)):
+            filtered_report = report.copy()
+            del filtered_report[i]
 
-        if (num_a == num_b):
-            is_decreasing = False
-            is_increaasing = False
-        elif (num_a < num_b):
-            is_decreasing = False
-        else:
-            is_increaasing = False
-        
-        safe = (is_increaasing or is_decreasing) and is_in_interval
+            is_safe = recursive_safe_check(filtered_report, min_diff, max_diff, tolerance - 1)
 
-        if (safe == False):
-            if tolerance > 0:
-                filtered_report = report.copy()
-                del filtered_report[i]
-                safe = recursive_safe_check(filtered_report, min_diff, max_diff, tolerance - 1)
-    
-    return safe
+            if is_safe:
+                return is_safe
+
+    return is_safe
 
 
 def increasing_safe_check(report: list, min_diff: int, max_diff: int, tolerance: int) -> bool:
@@ -110,7 +93,20 @@ def part_one():
 
 
 def part_two():
-    return
+    file_name = "input.txt"
+    seperator = " "
+    MIN_DIFF = 1
+    MAX_DIFF = 3
+    TOLERANCE = 1
+    
+    reports = preprocessing(file_name, seperator)
+
+    safe_count = 0
+    for report in reports:
+        if recursive_safe_check(report, MIN_DIFF, MAX_DIFF, TOLERANCE):
+            safe_count += 1
+
+    print("{} reports are safe!".format(safe_count))
 
 
 if __name__ == "__main__":

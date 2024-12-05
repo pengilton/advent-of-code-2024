@@ -24,7 +24,7 @@ def multiply(instruction: str) -> int:
 
 
 def part_one():
-    file_name = "input.txt"
+    file_name = "input_03.txt"
 
     pattern: re.Pattern = re.compile(r"mul\(\d{1,3},\d{1,3}\)")
     matched_instructions = preprocessing(file_name, pattern)
@@ -38,7 +38,7 @@ def part_one():
 
 
 def part_two():
-    file_name = "input.txt"
+    file_name = "input_03.txt"
 
     mul_pattern = r"mul\(\d{1,3},\d{1,3}\)"
     do_pattern = r"do\(\)"

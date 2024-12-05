@@ -34,7 +34,7 @@ def number_of_occurances(first_list: list, second_list: list) -> dict:
 
 
 def part_one():
-    df = pd.read_csv("input.csv", sep="   ", header=None, engine="python")
+    df = pd.read_csv("input_01.csv", sep="   ", header=None, engine="python")
 
     first_column = df[0].tolist()
     second_column = df[1].tolist()
@@ -48,7 +48,7 @@ def part_one():
 
 
 def part_two():
-    df = pd.read_csv("input.csv", sep="   ", header=None, engine="python")
+    df = pd.read_csv("input_01.csv", sep="   ", header=None, engine="python")
 
     first_column = df[0].tolist()
     second_column = df[1].tolist()

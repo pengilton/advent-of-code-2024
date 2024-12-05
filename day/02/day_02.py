@@ -77,7 +77,7 @@ def decreaasing_safe_check(report: list, min_diff: int, max_diff: int, tolerance
 
 
 def part_one():
-    file_name = "input.txt"
+    file_name = "input_2.txt"
     seperator = " "
     MIN_DIFF = 1
     MAX_DIFF = 3
@@ -93,7 +93,7 @@ def part_one():
 
 
 def part_two():
-    file_name = "input.txt"
+    file_name = "input_2.txt"
     seperator = " "
     MIN_DIFF = 1
     MAX_DIFF = 3

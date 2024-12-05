@@ -38,7 +38,27 @@ def part_one():
 
 
 def part_two():
-    print()
+    file_name = "input.txt"
+
+    mul_pattern = r"mul\(\d{1,3},\d{1,3}\)"
+    do_pattern = r"do\(\)"
+    dont_pattern = r"don't\(\)"
+    pattern = re.compile("|".join([mul_pattern, do_pattern, dont_pattern]))
+    matched_instructions = preprocessing(file_name, pattern)
+
+    sum = 0
+    do = True
+    for instruction in matched_instructions:
+        if re.match(re.compile(do_pattern), instruction):
+            do = True
+        elif re.match(re.compile(dont_pattern), instruction):
+            do = False
+        else:
+            if do:
+                product = multiply(instruction)
+                sum += product
+
+    print("Result of our multiplication is: {}".format(sum))
 
 
 if __name__ == "__main__":

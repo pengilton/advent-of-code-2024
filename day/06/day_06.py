@@ -108,72 +108,72 @@ def count_visited_places(map_of_lab: np.ndarray, visited_by_guard: str) -> int:
     return count
 
 
-# Returns True if we can create a rectanle out of the four corners.
-def check_for_loop(three_corners: list[tuple], fourth_corner: tuple) -> bool:
-    corner_a = three_corners[0]
-    corner_b = three_corners[1]
-    corner_c = three_corners[2]
+def get_all_visited_places(map_of_lab: np.ndarray, visited_by_guard: str) -> list[tuple]:
+    visited_placces: list[tuple] = []
 
-    vector_ba = tuple(map(operator.sub, corner_a, corner_b))
-    
-    corner_d = tuple(map(operator.add, corner_c, vector_ba))
+    num_rows = np.shape(map_of_lab)[0]
+    num_cols = np.shape(map_of_lab)[1]
 
-    if fourth_corner == corner_d:
-        return True
-    else:
-        return False
+    for row in range(num_rows):
+        for col in range(num_cols):
+            if map_of_lab[row][col] == visited_by_guard:
+                visited_placces.append((row, col))
+
+    return visited_placces
 
 
-def find_all_possible_obstructions(map_of_lab: np.ndarray, pattern: re.Pattern, obstacle: str, visited_by_guard: str) -> list[tuple]:
-    obstacle_locations: list[tuple] = []
-    # We keep the last three corners
-    last_three_corners: list[tuple] = []
-
+def brute_force_all_obstruction_positions(map_of_lab: np.ndarray, visited_places: list[tuple], pattern: re.Pattern, fixed_obstacle: str, visited_by_guard: str, placed_obstacle: str):
     guard_pos = get_guard_pos(map_of_lab, pattern)
+    # We remove the start position
+    visited_places.remove(guard_pos)
 
-    while is_inside_map(map_of_lab, guard_pos):
-        guard_pos_x = guard_pos[0]
-        guard_pos_y = guard_pos[1]
-        guard_direction = map_of_lab[guard_pos_x][guard_pos_y]
+    obstalce_pattern = re.compile("|".join([fixed_obstacle, placed_obstacle]))
 
-        next_pos = get_next_pos(guard_pos, guard_direction)
-        next_x = next_pos[0]
-        next_y = next_pos[1]
+    num_rows = np.shape(map_of_lab)[0]
+    num_cols = np.shape(map_of_lab)[1]
+    max_tries = 2 * num_rows * num_cols
 
-        if is_inside_map(map_of_lab, next_pos):
-            if map_of_lab[next_x][next_y] == obstacle:
-                # if we don't have three corners yet, we append until we get three
-                # else we are removing the first entry and append a new one
-                if len(last_three_corners) < 3:
-                    # current postition is going to be a corner
-                    last_three_corners.append(guard_pos)
+    count = 0
+    for visited_place in visited_places:
+        tries = 0
+
+        mab_of_lab_copy = map_of_lab.copy()
+        mab_of_lab_copy[visited_place[0]][visited_place[1]] = placed_obstacle
+
+        guard_pos = get_guard_pos(mab_of_lab_copy, pattern)
+
+        while is_inside_map(mab_of_lab_copy, guard_pos) and (tries < max_tries):
+            guard_x = guard_pos[0]
+            guard_y = guard_pos[1]
+            guard_direction = mab_of_lab_copy[guard_x][guard_y]
+
+            next_pos = get_next_pos(guard_pos, guard_direction)
+            next_x = next_pos[0]
+            next_y = next_pos[1]
+            
+            if is_inside_map(mab_of_lab_copy, next_pos):
+                if re.match(obstalce_pattern, mab_of_lab_copy[next_x][next_y]):
+                    # We rotate to the right
+                    new_direction = rotate_right(guard_direction)
+                    mab_of_lab_copy[guard_x][guard_y] = new_direction
                 else:
-                    last_three_corners.pop(0)
-                    last_three_corners.append(guard_pos)
-
-                new_direction = rotate_right(guard_direction)
-                map_of_lab[guard_pos_x][guard_pos_y] = new_direction
+                    # We move the guard to the new position
+                    mab_of_lab_copy[next_x][next_y] = mab_of_lab_copy[guard_x][guard_y]
+                    # Set the old position to visited_by_guard
+                    mab_of_lab_copy[guard_x][guard_y] = visited_by_guard
+                    # We update guard's psoition
+                    guard_pos = next_pos
             else:
-                if len(last_three_corners) == 3:
-                    # We check if we can block him to create a loop
-                    if check_for_loop(last_three_corners, guard_pos):
-                        obstacle_locations.append(next_pos)
-
-                # We move the guard to the new position
-                map_of_lab[next_x][next_y] = map_of_lab[guard_pos_x][guard_pos_y]
-                # Set the old position to visited_by_guard
-                map_of_lab[guard_pos_x][guard_pos_y] = visited_by_guard
-                # We update guard's psoition
+                # Guard would move out of map -> we set its location as visited and move them out
+                mab_of_lab_copy[guard_x][guard_y] = visited_by_guard
                 guard_pos = next_pos
-        else:
-            # Guard would move out of map -> we set its location as visited and move them out
-            map_of_lab[guard_pos_x][guard_pos_y] = visited_by_guard
-            guard_pos = next_pos
+            
+            tries += 1
         
-        if guard_pos == (9, 6):
-            print(guard_pos)
+        if tries >= max_tries:
+            count += 1
 
-    return obstacle_locations
+    return count
 
 
 def part_one():
@@ -193,17 +193,20 @@ def part_one():
 
 
 def part_two():
-    file_name = "test.txt"
+    file_name = "input_06.txt"
 
     map_of_lab = preprocessing(file_name)
+    map_of_lab_tracked = map_of_lab.copy()
 
     guard_pattern = re.compile(r"\^|>|v|<")
     fixed_obstacle = "#"
     visited_by_guard = "X"
+    placed_obstacle = "O"
 
-    possible_obstructions = find_all_possible_obstructions(map_of_lab, guard_pattern, fixed_obstacle, visited_by_guard)
+    track_guard(map_of_lab_tracked, guard_pattern, fixed_obstacle, visited_by_guard)
+    visited_places = get_all_visited_places(map_of_lab_tracked, visited_by_guard)
 
-    count = len(possible_obstructions)
+    count = brute_force_all_obstruction_positions(map_of_lab, visited_places, guard_pattern, fixed_obstacle, visited_by_guard, placed_obstacle)
 
     print("There are {} many different positions for possible obstructions.".format(count))
 

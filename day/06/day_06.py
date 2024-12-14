@@ -122,27 +122,25 @@ def get_all_visited_places(map_of_lab: np.ndarray, visited_by_guard: str) -> lis
     return visited_placces
 
 
-def brute_force_all_obstruction_positions(map_of_lab: np.ndarray, visited_places: list[tuple], pattern: re.Pattern, fixed_obstacle: str, visited_by_guard: str, placed_obstacle: str):
+def brute_force_all_obstruction_positions(map_of_lab: np.ndarray, visited_places: list[tuple], pattern: re.Pattern, 
+                                          fixed_obstacle: str, visited_by_guard: str, placed_obstacle: str) -> list[tuple]:
+    obstruction_positions: list[tuple] = []
+
     guard_pos = get_guard_pos(map_of_lab, pattern)
     # We remove the start position
     visited_places.remove(guard_pos)
 
     obstalce_pattern = re.compile("|".join([fixed_obstacle, placed_obstacle]))
 
-    num_rows = np.shape(map_of_lab)[0]
-    num_cols = np.shape(map_of_lab)[1]
-    max_tries = 2 * num_rows * num_cols
-
-    count = 0
-    for visited_place in visited_places:
-        tries = 0
+    for obstruction_spot in visited_places:
+        previously_turned: set = set()
 
         mab_of_lab_copy = map_of_lab.copy()
-        mab_of_lab_copy[visited_place[0]][visited_place[1]] = placed_obstacle
+        mab_of_lab_copy[obstruction_spot[0]][obstruction_spot[1]] = placed_obstacle
 
         guard_pos = get_guard_pos(mab_of_lab_copy, pattern)
 
-        while is_inside_map(mab_of_lab_copy, guard_pos) and (tries < max_tries):
+        while is_inside_map(mab_of_lab_copy, guard_pos) :
             guard_x = guard_pos[0]
             guard_y = guard_pos[1]
             guard_direction = mab_of_lab_copy[guard_x][guard_y]
@@ -156,6 +154,14 @@ def brute_force_all_obstruction_positions(map_of_lab: np.ndarray, visited_places
                     # We rotate to the right
                     new_direction = rotate_right(guard_direction)
                     mab_of_lab_copy[guard_x][guard_y] = new_direction
+
+                    # We check if we have been here and turned around
+                    pos_and_dic = guard_pos + tuple(guard_direction)
+                    if pos_and_dic in previously_turned:
+                        obstruction_positions.append(obstruction_spot)
+                        break                        
+                    else:
+                        previously_turned.add(pos_and_dic)
                 else:
                     # We move the guard to the new position
                     mab_of_lab_copy[next_x][next_y] = mab_of_lab_copy[guard_x][guard_y]
@@ -167,13 +173,8 @@ def brute_force_all_obstruction_positions(map_of_lab: np.ndarray, visited_places
                 # Guard would move out of map -> we set its location as visited and move them out
                 mab_of_lab_copy[guard_x][guard_y] = visited_by_guard
                 guard_pos = next_pos
-            
-            tries += 1
-        
-        if tries >= max_tries:
-            count += 1
 
-    return count
+    return obstruction_positions
 
 
 def part_one():
@@ -206,7 +207,10 @@ def part_two():
     track_guard(map_of_lab_tracked, guard_pattern, fixed_obstacle, visited_by_guard)
     visited_places = get_all_visited_places(map_of_lab_tracked, visited_by_guard)
 
-    count = brute_force_all_obstruction_positions(map_of_lab, visited_places, guard_pattern, fixed_obstacle, visited_by_guard, placed_obstacle)
+    possible_obstruction_spots = brute_force_all_obstruction_positions(map_of_lab, visited_places, guard_pattern, fixed_obstacle, 
+                                                                       visited_by_guard, placed_obstacle)
+
+    count = len(possible_obstruction_spots)
 
     print("There are {} many different positions for possible obstructions.".format(count))
 

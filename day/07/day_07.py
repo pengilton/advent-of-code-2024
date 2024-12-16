@@ -28,6 +28,10 @@ def calc_equation(equation: list[int], operators: str, avail_opertors: list[str]
                 result += num
             case "*":
                 result *= num
+            case "||":
+                restult_str = str(result)
+                restult_str += str(num)
+                result = int(restult_str)
     
     return result
 
@@ -67,11 +71,18 @@ def part_one():
 
 
 def part_two():
-    file_name = "test.txt"
+    file_name = "input_07.txt"
 
-    count = 0
+    equations: list[list[int]] = preprocessing(file_name)
+    avail_operators = ["+", "*", "||"]
 
-    print("There are {} many different positions for possible obstructions.".format(count))
+    total_calibtration_result = 0
+    for equation in equations:
+        solution = equation[0]
+        if check_equation(equation, avail_operators):
+            total_calibtration_result += solution
+
+    print("Total calibration result is {}.".format(total_calibtration_result))
 
 
 if __name__ == "__main__":
